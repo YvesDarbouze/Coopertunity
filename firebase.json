@@ -1,0 +1,37 @@
+{
+  "apphosting": [
+    {
+      "backendId": "cooper",
+      "rootDir": "~/Downloads/MyCoopertunityProject",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "cooper",
+      "rootDir": "What is the root directory of your app? (apphosting) .",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "cooper",
+      "rootDir": ".",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ]
+}
