@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 61, 57, 53;
+  /* #3D3935 Pantone Black 7 C */
+  --background-start-rgb: 240, 238, 233;
+  /* #F0EEE9 Cloud Dancer */
+  --background-end-rgb: 240, 238, 233;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+.btn {
+  font-family: var(--font-heading);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

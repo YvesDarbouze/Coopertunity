@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  location      String?
+  profession    String?
+  
+  // Phase 1 Profile Fields
+  linkedInId    String?
+  isVeteran     Boolean   @default(false)
+  skillsInventory Json?   // JSONB
+  isAfrican     Boolean   @default(false)
+  
+  // Phase 2 Matching Fields
+  targetLocation String?
+  isInvestor    Boolean   @default(false)
+  investmentRange String?
+  willingnessToTeach Boolean @default(false)
+  
+  // Taxonomy Fields
+  sector        EconomicSector?
+  sicCode       String?
+  titles        String[]      // Standardized titles from Job Library
+
+  accounts      Account[]
+  sessions      Session[]
+  coopertunities Coopertunity[]
+  subscriptions Subscription[]
+  matches       Match[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Phase 4 Relations
+  searchHistory SearchHistory[]
+  notifications Notification[]
+  interactions  Interaction[]
+  
+  // Phase 5 Relations
+  isPrivate     Boolean       @default(false)
+  sentRequests  ConnectionRequest[] @relation("Sender")
+  receivedRequests ConnectionRequest[] @relation("Receiver")
+  conversations Conversation[] @relation("UserConversations")
+  messages      Message[]
+  reports       Report[]
+
+  // Phase 8 Profile Enrichment
+  workHistory   WorkExperience[]
+  education     Education[]
+}
+
+model WorkExperience {
+    id          String   @id @default(cuid())
+    userId      String
+    title       String
+    company     String
+    location    String?
+    startDate   DateTime
+    endDate     DateTime?
+    current     Boolean  @default(false)
+    description String?  @db.Text
+    
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}
+
+model Education {
+    id           String   @id @default(cuid())
+    userId       String
+    school       String
+    degree       String?
+    fieldOfStudy String?
+    startDate    DateTime?
+    endDate      DateTime?
+    
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model ConnectionRequest {
+  id        String   @id @default(cuid())
+  senderId  String
+  receiverId String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  sender    User     @relation("Sender", fields: [senderId], references: [id])
+  receiver  User     @relation("Receiver", fields: [receiverId], references: [id])
+  
+  @@unique([senderId, receiverId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  participants User[] @relation("UserConversations")
+  messages     Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  attachmentUrl  String?
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  sender         User         @relation(fields: [senderId], references: [id])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  reporterId String
+  targetId   String   // User ID or Post ID
+  targetType String   // "USER", "COOPERTUNITY", "MESSAGE"
+  reason     String
+  status     String   @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  createdAt  DateTime @default(now())
+  
+  reporter   User     @relation(fields: [reporterId], references: [id])
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  targetUserId String?
+  targetSector EconomicSector?
+  
+  createdAt DateTime @default(now())
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Coopertunity {
+  id                String         @id @default(cuid())
+  title             String
+  description       String
+  type              CoopertunityType
+  sector            EconomicSector
+  subSector         String?
+  sicCode           String?
+  requiredSkills    String[]
+  
+  // Phase 3 Fields
+  location          String?
+  latitude          Float?
+  longitude         Float?
+  
+  investmentAmount  Float?
+  compensationType  String?       // "PAID", "EQUITY", "VOLUNTEER", "INVESTMENT"
+  
+  isNonProfit       Boolean        @default(false)
+  isAvailable       Boolean        @default(true) // New field for availability
+  willingnessToTeach Boolean       @default(false) // Added for skill sharing
+  donationLink      String?
+  
+  keywords          String[]
+  squad             Json?          // Array of roles needed
+  
+  landTitleVerified Boolean        @default(false)
+
+  authorId          String
+  author            User           @relation(fields: [authorId], references: [id])
+  status            String         @default("OPEN")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  expiresAt         DateTime?
+  matches           Match[]
+}
+
+model Match {
+  id             String       @id @default(cuid())
+  userId         String
+  coopertunityId String
+  score          Float        // Utility Score (0.0 - 1.0)
+  status         String       @default("PENDING") // PENDING, VIEWED, ACCEPTED, REJECTED
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coopertunity   Coopertunity @relation(fields: [coopertunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, coopertunityId])
+  @@index([userId])
+  @@index([coopertunityId])
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  query     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  type      String   @default("MATCH") // MATCH, SYSTEM, INTERACTION
+  link      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Interaction {
+  id             String        @id @default(cuid())
+  actorId        String
+  targetId       String        // Can be User ID or Coopertunity ID
+  targetType     String        // "USER", "COOPERTUNITY"
+  action         String        // "PASS", "WATCH", "CONNECT"
+  createdAt      DateTime      @default(now())
+  
+  actor          User          @relation(fields: [actorId], references: [id])
+}
+
+model JobListing {
+  id          String   @id @default(cuid())
+  title       String
+  company     String
+  location    String
+  description String
+  url         String
+  source      String   // "Indeed", "Google"
+  postedAt    DateTime
+  createdAt   DateTime @default(now())
+}
+
+enum CoopertunityType {
+  PROJECT       // Team/Squad
+  ROLE          // Single Job
+  DEAL          // Investment
+  LAND_DEAL     // Land specific
+}
+
+enum EconomicSector {
+  PRIMARY
+  SECONDARY
+  TERTIARY
+  QUATERNARY
+}
