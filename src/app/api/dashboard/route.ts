@@ -21,16 +21,11 @@ export async function GET(_req: Request) {
                 actorId: session.user.id,
                 action: "WATCH"
             },
-            include: {
-                // Determine what was watched -> Need to handle polymorphically in frontend or separate queries
-                // For now, let's just return the IDs and types
-            },
             take: 5,
             orderBy: { createdAt: "desc" }
         });
 
         // Fetch Matches (Simulated or from Notifications)
-        // For MVP, "Matches" can be people who have sent connection requests or accepted yours
         const matches = await prisma.connectionRequest.findMany({
             where: {
                 OR: [
@@ -50,10 +45,48 @@ export async function GET(_req: Request) {
             return partner;
         });
 
+        // Mock additional data for the new Dashboard UI
+        const profileViews = Math.floor(Math.random() * 50) + 12; // Example static/random mock
+        const stakeholderRequests = Math.floor(Math.random() * 5); // Example mock
+
+        // Algorithmic "Smart Feed": Mix of Coopertunities and Network Activity
+        const mockFeed = [
+            {
+                id: "feed_1",
+                type: "RECOMMENDED",
+                title: "Solar Grid Expansion in Nairobi",
+                sector: "Primary",
+                activityText: null,
+                targetId: "coop1",
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: "feed_2",
+                type: "NETWORK_ACTIVITY",
+                title: null,
+                sector: null,
+                activityText: "David Adebayo just invested in AgriTech Solutions",
+                targetId: "user_david",
+                createdAt: new Date(Date.now() - 3600000).toISOString()
+            },
+            {
+                id: "feed_3",
+                type: "RECOMMENDED",
+                title: "FinTech App Developer Needed",
+                sector: "Tertiary",
+                activityText: null,
+                targetId: "coop2",
+                createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+        ];
+
         return NextResponse.json({
             posts: myPosts,
             saved: savedItems,
-            matches: formattedMatches
+            matches: formattedMatches,
+            profileViews,
+            stakeholderRequests,
+            feed: mockFeed
         });
 
     } catch (error) {

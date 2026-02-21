@@ -18,6 +18,9 @@ const manrope = Manrope({
   weight: ["300", "400", "500", "600"],
 });
 
+import { AuthModalProvider } from "@/contexts/AuthModalContext";
+import LoginModal from "@/components/auth/LoginModal";
+
 export const metadata: Metadata = {
   title: "Coopertunity",
   description: "Where Africans find purpose, and each other.",
@@ -32,9 +35,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${bigshotOne.variable} ${manrope.variable} font-body bg-cloud-dancer text-deep-brown antialiased`}>
         <AuthContext>
-          <Header />
-          <GatekeeperModal />
-          {children}
+          <AuthModalProvider>
+            <Header />
+            <GatekeeperModal />
+            <LoginModal />
+            {children}
+          </AuthModalProvider>
         </AuthContext>
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`}

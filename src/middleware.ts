@@ -12,6 +12,18 @@ export default withAuth(
             if (!token) {
                 return NextResponse.redirect(new URL("/", req.url));
             }
+
+            // 1a. Enforce Onboarding Flow
+            // If they are logged in, but not onboarded, and trying to hit the dashboard => Redirect to onboarding
+            if (!token.onboarded && path.startsWith("/dashboard")) {
+                return NextResponse.redirect(new URL("/onboarding", req.url));
+            }
+
+            // 1b. Prevent looping
+            // If they ARE onboarded, but somehow hit the onboarding page => Redirect to dashboard
+            if (token.onboarded && path.startsWith("/onboarding")) {
+                return NextResponse.redirect(new URL("/dashboard", req.url));
+            }
         }
 
         // 2. Protect Coopertunity Creation (The "Write" Access Gate)

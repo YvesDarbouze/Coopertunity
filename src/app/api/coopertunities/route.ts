@@ -37,7 +37,7 @@ export async function POST(req: Request) {
             donationLink,
             keywords,
             requiredSkills, // New
-            squad
+            stakeholders
         } = body;
 
         // Auto-generate SIC Code based on SubSector or Title
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
                 keywords,
                 requiredSkills, // New
                 sicCode, // New
-                squad,
+                stakeholders,
                 authorId: session.user.id,
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
                 // landTitleVerified defaults to false

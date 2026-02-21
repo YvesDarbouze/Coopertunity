@@ -54,11 +54,19 @@ model User {
   isInvestor    Boolean   @default(false)
   investmentRange String?
   willingnessToTeach Boolean @default(false)
+  onboarded     Boolean   @default(false)
+  
+  // Trust & Safety Fields
+  isVerified     Boolean @default(false)
+  stealthMode    Boolean @default(false)
+  locationPrivacy String @default("EXACT") // EXACT, CITY, COUNTRY, HIDDEN
   
   // Taxonomy Fields
   sector        EconomicSector?
+  subSectors    String[]      // Sub-sectors for specific taxonomy icons
   sicCode       String?
   titles        String[]      // Standardized titles from Job Library
+  residenceStatus String?     @default("UNKNOWN") // "DIASPORA", "CONTINENTAL", "UNKNOWN"
 
   accounts      Account[]
   sessions      Session[]
@@ -71,7 +79,6 @@ model User {
 
   // Phase 4 Relations
   searchHistory SearchHistory[]
-  notifications Notification[]
   interactions  Interaction[]
   
   // Phase 5 Relations
@@ -85,6 +92,34 @@ model User {
   // Phase 8 Profile Enrichment
   workHistory   WorkExperience[]
   education     Education[]
+
+  // Phase 9: Network Stakeholders & Watchlists
+  ownedStakeholders   Stakeholder[]       @relation("StakeholderOwner")
+  stakeholderMemberships Stakeholder[]    @relation("StakeholderMembers")
+  watchlists    Watchlist[]
+
+  // Phase 10: Notification Center
+  notifications Notification[]
+  
+  // Phase 10: Data Ingestion (OAuth Drafts)
+  draft         UserDraft?
+}
+
+model UserDraft {
+    id          String   @id @default(cuid())
+    userId      String   @unique
+    firstName   String?
+    lastName    String?
+    email       String?
+    location    String?
+    avatarUrl   String?
+    headline    String?
+    positions   Json?    // Store raw LinkedIn positions array temporarily
+    
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 }
 
 model WorkExperience {
@@ -122,6 +157,11 @@ model ConnectionRequest {
   senderId  String
   receiverId String
   status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  
+  // Phase 5: Network Expansion
+  type           String?  // "PERSONAL", "BUSINESS"
+  coopertunityId String?  // Optional context
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -129,6 +169,29 @@ model ConnectionRequest {
   receiver  User     @relation("Receiver", fields: [receiverId], references: [id])
   
   @@unique([senderId, receiverId])
+}
+
+model Stakeholder {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String   // e.g. "Accra Solar Team"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User     @relation("StakeholderOwner", fields: [ownerId], references: [id])
+  members   User[]   @relation("StakeholderMembers")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  sector    String?
+  keywords  String[]
+  lastChecked DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Conversation {
@@ -200,6 +263,8 @@ model Coopertunity {
   longitude         Float?
   
   investmentAmount  Float?
+  amountRaised      Float          @default(0) // For Non-Profits/Donations
+  investorsCount    Int            @default(0) // For Investments Tracker
   compensationType  String?       // "PAID", "EQUITY", "VOLUNTEER", "INVESTMENT"
   
   isNonProfit       Boolean        @default(false)
@@ -208,7 +273,7 @@ model Coopertunity {
   donationLink      String?
   
   keywords          String[]
-  squad             Json?          // Array of roles needed
+  stakeholders      Json?          // Array of roles needed
   
   landTitleVerified Boolean        @default(false)
 
@@ -242,18 +307,6 @@ model SearchHistory {
   id        String   @id @default(cuid())
   userId    String
   query     String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  message   String
-  read      Boolean  @default(false)
-  type      String   @default("MATCH") // MATCH, SYSTEM, INTERACTION
-  link      String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
@@ -293,4 +346,41 @@ enum EconomicSector {
   SECONDARY
   TERTIARY
   QUATERNARY
+}
+
+// -----------------------------------------------------------------------------
+// PHASE 10: NOTIFICATION CENTER
+// -----------------------------------------------------------------------------
+
+enum NotificationTier {
+  TIER_1 // High Alert - Economic Matches (The Opportunity Bell)
+  TIER_2 // Standard - Connections, Messages (The Chat Bubble)
+  TIER_3 // Low - Newsletters, System Updates
+}
+
+enum NotificationType {
+  MATCH         // Direct Coopertunity match based on skills/location
+  CONNECTION    // Connection Request / Accept
+  MESSAGE       // Direct Message 
+  SYSTEM        // Platform News
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String           // The recipient
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tier        NotificationTier @default(TIER_2)
+  type        NotificationType
+  
+  title       String
+  message     String           @db.Text
+  
+  isRead      Boolean          @default(false)
+  linkUrl     String?          // E.g., /coopertunities/[id] or /network
+  
+  // Optional relations context
+  relatedId   String?          // e.g. coopertunity id, or sender user id
+  
+  createdAt   DateTime         @default(now())
 }

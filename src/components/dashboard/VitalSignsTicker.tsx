@@ -22,7 +22,7 @@ export function VitalSignsTicker() {
                 className="border-l-4 border-pan-green"
             />
             <MetricCard
-                title="Squad Requests"
+                title="Stakeholder Requests"
                 value="3"
                 icon={<UserPlus className="w-5 h-5" />}
                 color="blue"

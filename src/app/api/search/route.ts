@@ -20,11 +20,12 @@ export async function GET(req: Request) {
         // 1. Search Users
         const users = await prisma.user.findMany({
             where: {
+                stealthMode: false,
+                onboarded: true,
                 OR: [
                     { name: { contains: query, mode: "insensitive" } },
                     { profession: { contains: query, mode: "insensitive" } },
                     { location: { contains: query, mode: "insensitive" } },
-                    // { skillsInventory: { path: [], array_contains: query } } // JSONB search is complex, simplified for now
                 ],
             },
             select: {

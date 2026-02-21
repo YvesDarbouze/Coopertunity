@@ -143,11 +143,11 @@ export async function GET(req: Request) {
                 isDiaspora: !isLocationOnContinent(j.location),
                 image: null
             })),
-            // "Power Squad" Recommendation (static editorial card)
+            // "Power Stakeholder" Recommendation (static editorial card)
             {
-                id: "squad-1",
+                id: "stakeholder-1",
                 type: "COOPERTUNITY",
-                title: "⚡ Power Squad Suggestion",
+                title: "⚡ Power Stakeholder Suggestion",
                 subtitle: "You + Dr. Eze + Cocoa Plant",
                 location: "Accra, Ghana",
                 matchScore: 98,

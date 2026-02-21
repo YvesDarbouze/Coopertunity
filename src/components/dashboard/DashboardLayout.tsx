@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Briefcase, Users, FileText, Menu, X, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, Users, FileText, Menu, X, Settings, LogOut, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
@@ -91,19 +91,37 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             label="Applications"
                             href="/dashboard/applications"
                         />
+                        <SidebarItem
+                            icon={MessageCircle}
+                            label="Inbox"
+                            href="/dashboard/inbox"
+                        />
                     </nav>
 
                     {/* Footer Actions */}
-                    <div className="p-4 border-t border-gray-700 space-y-2">
+                    <div className="px-4 py-4 border-t border-gray-700 space-y-1">
+                        <div className="text-xs uppercase font-bold text-gray-500 tracking-wider mb-2 px-4">Account Settings</div>
                         <SidebarItem
                             icon={Settings}
-                            label="Settings"
-                            href="/settings"
+                            label="Profile details"
+                            href="/dashboard/settings/profile"
                         />
-                        <button className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-pan-red/20 hover:text-pan-red transition-colors">
-                            <LogOut className="w-5 h-5" />
-                            <span>Sign Out</span>
-                        </button>
+                        <SidebarItem
+                            icon={Settings}
+                            label="Trust & Verification"
+                            href="/dashboard/settings/verification"
+                        />
+                        <SidebarItem
+                            icon={Settings}
+                            label="Privacy & Visibility"
+                            href="/dashboard/settings/privacy"
+                        />
+                        <div className="pt-4 mt-2 border-t border-gray-700">
+                            <button className="flex items-center space-x-3 px-4 py-3 w-full rounded-lg text-gray-300 hover:bg-pan-red/20 hover:text-pan-red transition-colors">
+                                <LogOut className="w-5 h-5" />
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </aside>

@@ -11,15 +11,15 @@ interface Notification {
     id: string;
     title: string;
     message: string;
-    read: boolean;
-    link?: string;
+    isRead: boolean;
+    linkUrl?: string;
     createdAt: string;
 }
 
 export function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [requestCount, setRequestCount] = useState(0);
+    const [tier1, setTier1] = useState<Notification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
@@ -28,8 +28,8 @@ export function NotificationBell() {
                 const res = await fetch("/api/notifications");
                 if (res.ok) {
                     const data = await res.json();
-                    setNotifications(data.notifications ?? []);
-                    setRequestCount((data.requests ?? []).length);
+                    setTier1(data.tier1 ?? []);
+                    setUnreadCount(data.unreadCountTier1 ?? 0);
                 }
             } catch (e) {
                 console.error("Failed to load notifications", e);
@@ -38,25 +38,25 @@ export function NotificationBell() {
         fetchNotifications();
     }, []);
 
-    const unreadCount = notifications.filter(n => !n.read).length + requestCount;
-
-    const markAsRead = async (id: string, link?: string) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    const markAsRead = async (id: string, linkUrl?: string) => {
+        setTier1(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
         await fetch("/api/notifications", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id }),
+            body: JSON.stringify({ notificationId: id }),
         });
         setIsOpen(false);
-        if (link) router.push(link);
+        if (linkUrl) router.push(linkUrl);
     };
 
     const markAllRead = async () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        setTier1(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
         await fetch("/api/notifications", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ markAllRead: true }),
+            body: JSON.stringify({ markAllRead: true, tier: 'TIER_1' }),
         });
     };
 
@@ -64,11 +64,11 @@ export function NotificationBell() {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-full hover:bg-gray-100 transition text-deep-brown hover:text-mocha-mousse"
+                className="relative p-2 rounded-full hover:bg-peach-fuzz/20 transition text-deep-brown hover:text-pan-terracotta"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-sm" />
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-peach-fuzz border-2 border-white rounded-full animate-pulse shadow-sm" />
                 )}
             </button>
 
@@ -82,8 +82,10 @@ export function NotificationBell() {
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 overflow-hidden"
                         >
-                            <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <h3 className="font-heading font-black text-deep-brown text-sm">Notifications</h3>
+                            <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-peach-fuzz/10">
+                                <h3 className="font-heading font-black text-pan-terracotta text-sm flex items-center gap-1">
+                                    <Bell size={14} className="text-pan-gold" /> Opportunities
+                                </h3>
                                 <div className="flex items-center gap-3">
                                     {unreadCount > 0 && (
                                         <button
@@ -96,56 +98,42 @@ export function NotificationBell() {
                                 </div>
                             </div>
 
-                            <div className="max-h-[300px] overflow-y-auto">
-                                {requestCount > 0 && (
-                                    <Link
-                                        href="/inbox?tab=requests"
-                                        onClick={() => setIsOpen(false)}
-                                        className="flex items-center gap-2 px-3 py-2.5 bg-violet-50 border-b border-violet-100 hover:bg-violet-100 transition-colors"
-                                    >
-                                        <span className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />
-                                        <span className="text-xs font-bold text-violet-700 flex-1">
-                                            {requestCount} pending connection request{requestCount !== 1 ? "s" : ""}
-                                        </span>
-                                        <span className="text-[10px] text-violet-400">View →</span>
-                                    </Link>
-                                )}
-
-                                {notifications.length === 0 && requestCount === 0 ? (
-                                    <div className="p-4 text-center text-mocha-mousse text-xs font-medium">
-                                        No notifications yet.
+                            <div className="max-h-[300px] overflow-y-auto bg-white">
+                                {tier1.length === 0 ? (
+                                    <div className="p-6 text-center text-mocha-mousse text-xs font-medium">
+                                        No recent matches found. Keep building your network!
                                     </div>
                                 ) : (
-                                    notifications.slice(0, 6).map(notif => (
+                                    tier1.slice(0, 6).map(notif => (
                                         <div
                                             key={notif.id}
-                                            onClick={() => markAsRead(notif.id, notif.link)}
+                                            onClick={() => markAsRead(notif.id, notif.linkUrl)}
                                             className={clsx(
-                                                "p-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer",
-                                                !notif.read && "bg-peach-fuzz/10"
+                                                "p-3 border-b border-gray-50 hover:bg-peach-fuzz/5 transition cursor-pointer relative",
+                                                !notif.isRead && "bg-peach-fuzz/10 shadow-sm"
                                             )}
                                         >
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className={clsx("font-bold text-sm", !notif.read ? "text-deep-brown" : "text-gray-400")}>
+                                            <div className="flex justify-between items-start mb-1 relative z-10">
+                                                <span className={clsx("font-bold text-sm", !notif.isRead ? "text-pan-terracotta" : "text-gray-500")}>
                                                     {notif.title}
                                                 </span>
-                                                {!notif.read && (
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0 ml-2" />
+                                                {!notif.isRead && (
+                                                    <span className="w-2 h-2 rounded-full bg-peach-fuzz mt-1 shrink-0 ml-2 shadow-[0_0_8px_rgba(255,190,152,0.8)]" />
                                                 )}
                                             </div>
-                                            <p className="text-xs text-mocha-mousse line-clamp-2">{notif.message}</p>
+                                            <p className="text-xs text-mocha-mousse line-clamp-2 relative z-10 font-medium">{notif.message}</p>
                                         </div>
                                     ))
                                 )}
                             </div>
 
-                            {/* Footer → Inbox */}
+                            {/* Footer */}
                             <Link
-                                href="/inbox"
+                                href="/dashboard/explore"
                                 onClick={() => setIsOpen(false)}
-                                className="flex items-center justify-center gap-1 py-3 text-xs font-bold text-amber-700 hover:bg-amber-50 transition-colors border-t border-gray-100"
+                                className="flex items-center justify-center gap-1 py-3 text-xs font-bold text-pan-gold hover:bg-amber-50 transition-colors border-t border-gray-100 bg-gray-50"
                             >
-                                View all in Inbox →
+                                Explore All Opportunities →
                             </Link>
                         </motion.div>
                     </>

@@ -13,7 +13,7 @@ import { TAXONOMY } from "@/lib/taxonomy_data";
 import clsx from "clsx";
 
 enum CoopertunityType {
-    PROJECT = "PROJECT", // Team/Squad
+    PROJECT = "PROJECT", // Team/Stakeholder
     ROLE = "ROLE", // Single Job
     DEAL = "DEAL", // Investment
     LAND_DEAL = "LAND_DEAL", // Specific Deal type
@@ -37,7 +37,7 @@ enum CompensationType {
 const STEPS = [
     { id: "type", title: "What does the Continent need?", subtitle: "Start the conversation." },
     { id: "sector", title: "Where does it fit?", subtitle: "Select the economic sector." },
-    { id: "details", title: "Define the Opportunity", subtitle: "Specifics, Squads, and Keywords." },
+    { id: "details", title: "Define the Opportunity", subtitle: "Specifics, Stakeholders, and Keywords." },
     { id: "location", title: "Pinpoint Location", subtitle: "Where is this happening?" },
     { id: "extras", title: "Final Details", subtitle: "Safety, Value, and Impact." },
 ];
@@ -64,7 +64,7 @@ export default function WizardForm() {
         donationLink: "",
         keywords: [] as string[],
         requiredSkills: [] as string[], // New Matching Field
-        squad: [] as { role: string, count: number }[], // For Projects
+        stakeholders: [] as { role: string, count: number }[], // For Projects
         landTitleVerified: false, // Internal check
     });
 
@@ -82,14 +82,44 @@ export default function WizardForm() {
     };
 
     const nextStep = () => {
-        if (currentStep === 4 && formData.type === CoopertunityType.LAND_DEAL && !disclaimerAccepted) {
-            alert("You must acknowledge the Land Deal disclaimer to proceed.");
-            return;
+        // Step Validation
+        if (currentStep === 1) {
+            if (!formData.sector || !formData.subSector) {
+                alert("Please select a Sector and an Industry to continue.");
+                return;
+            }
         }
 
-        // Validate on step transitions where text is entered
         if (currentStep === 2) {
+            if (!formData.title.trim() || !formData.description.trim()) {
+                alert("A Title and Description are required to proceed.");
+                return;
+            }
             if (!validateContent()) return;
+            if (formData.keywords.length === 0) {
+                alert("Please provide at least one Keyword to help with matching.");
+                return;
+            }
+        }
+
+        if (currentStep === 3) {
+            if (!formData.location.trim()) {
+                alert("Please indicate the Location for this opportunity.");
+                return;
+            }
+        }
+
+        if (currentStep === 4) {
+            if (formData.type === CoopertunityType.LAND_DEAL && !disclaimerAccepted) {
+                alert("You must acknowledge the Land Deal disclaimer to proceed.");
+                return;
+            }
+            if (!formData.isNonProfit && (formData.type === CoopertunityType.DEAL || formData.compensationType === CompensationType.INVESTMENT_REQUIRED)) {
+                if (!formData.investmentAmount || parseFloat(formData.investmentAmount) <= 0) {
+                    alert("Please specify the Investment Amount required.");
+                    return;
+                }
+            }
         }
 
         if (currentStep < STEPS.length - 1) {
@@ -129,12 +159,13 @@ export default function WizardForm() {
                     donationLink: formData.donationLink, // New
                     keywords: formData.keywords,
                     requiredSkills: formData.requiredSkills, // New Matching Field
-                    squad: formData.type === CoopertunityType.PROJECT ? formData.squad : undefined, // New
+                    stakeholders: formData.type === CoopertunityType.PROJECT ? formData.stakeholders : undefined, // New
                 }),
             });
 
             if (res.ok) {
-                router.push("/dashboard");
+                const data = await res.json();
+                router.push(`/dashboard/explore`); // Go to feed for now, or `/coopertunities/${data.id}` if a specific post page exists
             } else {
                 console.error("Failed to create coopertunity");
                 setLoading(false);
@@ -211,7 +242,7 @@ export default function WizardForm() {
                                     },
                                     {
                                         label: "Labor / Team",
-                                        desc: "Building a squad for a project.",
+                                        desc: "Building a stakeholder for a project.",
                                         icon: Users,
                                         type: CoopertunityType.PROJECT
                                     },
@@ -332,14 +363,14 @@ export default function WizardForm() {
                                     />
                                 </div>
 
-                                {/* Squads for Projects */}
+                                {/* Stakeholders for Projects */}
                                 {formData.type === CoopertunityType.PROJECT && (
                                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                                         <label className="block text-sm font-bold text-deep-brown mb-3 uppercase flex items-center gap-2">
-                                            <Users size={16} /> Squad Roles Needed
+                                            <Users size={16} /> Stakeholder Roles Needed
                                         </label>
                                         <div className="space-y-3">
-                                            {formData.squad.map((slot, idx) => (
+                                            {formData.stakeholders.map((slot, idx) => (
                                                 <div key={idx} className="flex gap-2 items-center">
                                                     <span className="text-mocha-mousse text-sm font-medium">Need</span>
                                                     <input
@@ -347,9 +378,9 @@ export default function WizardForm() {
                                                         className="w-16 bg-white border border-gray-200 rounded px-2 py-1 text-center text-deep-brown font-medium"
                                                         value={slot.count}
                                                         onChange={(e) => {
-                                                            const newSquad = [...formData.squad];
-                                                            newSquad[idx].count = parseInt(e.target.value);
-                                                            setFormData({ ...formData, squad: newSquad });
+                                                            const newStakeholders = [...formData.stakeholders];
+                                                            newStakeholders[idx].count = parseInt(e.target.value);
+                                                            setFormData({ ...formData, stakeholders: newStakeholders });
                                                         }}
                                                     />
                                                     <input
@@ -358,18 +389,18 @@ export default function WizardForm() {
                                                         placeholder="Role (e.g. Architect)"
                                                         value={slot.role}
                                                         onChange={(e) => {
-                                                            const newSquad = [...formData.squad];
-                                                            newSquad[idx].role = e.target.value;
-                                                            setFormData({ ...formData, squad: newSquad });
+                                                            const newStakeholders = [...formData.stakeholders];
+                                                            newStakeholders[idx].role = e.target.value;
+                                                            setFormData({ ...formData, stakeholders: newStakeholders });
                                                         }}
                                                     />
                                                     <button onClick={() => {
-                                                        setFormData({ ...formData, squad: formData.squad.filter((_, i) => i !== idx) });
+                                                        setFormData({ ...formData, stakeholders: formData.stakeholders.filter((_, i) => i !== idx) });
                                                     }} className="text-red-400 hover:text-red-600"><X size={16} /></button>
                                                 </div>
                                             ))}
                                             <button
-                                                onClick={() => setFormData({ ...formData, squad: [...formData.squad, { role: "", count: 1 }] })}
+                                                onClick={() => setFormData({ ...formData, stakeholders: [...formData.stakeholders, { role: "", count: 1 }] })}
                                                 className="text-xs text-peach-fuzz hover:text-deep-brown hover:underline flex items-center gap-1 font-bold"
                                             >
                                                 + Add Role Slot

@@ -74,7 +74,7 @@ export function calculateMatchScore(user: UserProfile, coopertunity: Coopertunit
     }
 
     // 4. Willingness to Teach (10 pts)
-    // If it's a PROJECT needing a squad/skills, and user wants to teach
+    // If it's a PROJECT needing a stakeholder/skills, and user wants to teach
     if ((coopertunity.type === "PROJECT" || coopertunity.type === "ROLE") && user.willingnessToTeach) {
         score += 10;
     }

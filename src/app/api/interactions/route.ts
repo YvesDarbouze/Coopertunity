@@ -48,8 +48,9 @@ export async function POST(req: Request) {
                         userId: ownerId,
                         title: "New Interest!",
                         message: `${session.user.name || "A member"} wants to connect regarding your ${targetType.toLowerCase()}.`,
-                        type: "MATCH",
-                        link: `/dashboard/interactions` // Todo: Define route
+                        type: "CONNECTION",
+                        tier: "TIER_2",
+                        linkUrl: `/dashboard/network` // Routing straight to Network tab instead of interactions
                     }
                 });
             }

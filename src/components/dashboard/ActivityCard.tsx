@@ -3,13 +3,13 @@ import { User, DollarSign, Users, ArrowRight } from "lucide-react";
 import clsx from "clsx";
 
 interface ActivityCardProps {
-    type: "investment" | "connection" | "squad_join";
+    type: "investment" | "connection" | "stakeholder_join";
     actor: {
         name: string;
         image?: string;
     };
     target: {
-        name: string; // e.g., "Solar Farm Project", "John Doe", "Accra Tech Squad"
+        name: string; // e.g., "Solar Farm Project", "John Doe", "Accra Tech Stakeholder"
         id?: string;
     };
     timestamp: string;
@@ -22,7 +22,7 @@ export function ActivityCard({ type, actor, target, timestamp }: ActivityCardPro
                 return <DollarSign className="w-4 h-4 text-green-600" />;
             case "connection":
                 return <Users className="w-4 h-4 text-blue-600" />;
-            case "squad_join":
+            case "stakeholder_join":
                 return <User className="w-4 h-4 text-purple-600" />;
             default:
                 return <User className="w-4 h-4 text-gray-600" />;
@@ -35,7 +35,7 @@ export function ActivityCard({ type, actor, target, timestamp }: ActivityCardPro
                 return "invested in";
             case "connection":
                 return "connected with";
-            case "squad_join":
+            case "stakeholder_join":
                 return "joined";
             default:
                 return "interacted with";

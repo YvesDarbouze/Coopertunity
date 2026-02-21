@@ -59,7 +59,7 @@ export function SmartFeed() {
         {
             type: "activity",
             data: {
-                type: "squad_join",
+                type: "stakeholder_join",
                 actor: { name: "David K.", image: undefined },
                 target: { name: "Accra Solar Team" },
                 timestamp: "1 day ago",

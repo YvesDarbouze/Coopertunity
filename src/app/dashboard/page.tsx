@@ -7,7 +7,7 @@ import Link from "next/link";
 import {
     Briefcase, Users, Bookmark, MessageSquare,
     Plus, ArrowRight, Loader2, MapPin, Bell,
-    TrendingUp, Clock
+    TrendingUp, Clock, Eye, UserPlus, Zap, Activity
 } from "lucide-react";
 import clsx from "clsx";
 import { QuickLaunchWidget } from "@/components/dashboard/QuickLaunchWidget";
@@ -38,10 +38,23 @@ type SavedItem = {
     createdAt: string;
 };
 
+type FeedItem = {
+    id: string;
+    type: "RECOMMENDED" | "NETWORK_ACTIVITY";
+    title: string | null;
+    sector: string | null;
+    activityText: string | null;
+    targetId: string;
+    createdAt: string;
+};
+
 type DashboardData = {
     posts: Post[];
     saved: SavedItem[];
     matches: Connection[];
+    profileViews: number;
+    stakeholderRequests: number;
+    feed: FeedItem[];
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -144,6 +157,69 @@ function PostCard({ post }: { post: Post }) {
     );
 }
 
+function FeedCard({ item }: { item: FeedItem }) {
+    const isActivity = item.type === "NETWORK_ACTIVITY";
+
+    return (
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+            {/* Soft subtle glow on hover for premium feel */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-amber-50/0 to-amber-50/0 group-hover:from-amber-50/20 group-hover:to-transparent transition-colors pointer-events-none" />
+
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                    {isActivity ? (
+                        <span className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                            <Zap size={12} /> Network Activity
+                        </span>
+                    ) : (
+                        <span className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-1 rounded-md">
+                            <Briefcase size={12} /> Recommended
+                        </span>
+                    )}
+
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                        <Clock size={12} /> {timeAgo(item.createdAt)}
+                    </span>
+                </div>
+
+                <div className="mb-4">
+                    {isActivity ? (
+                        <p className="text-gray-800 font-medium text-sm leading-relaxed">
+                            {item.activityText}
+                        </p>
+                    ) : (
+                        <>
+                            {item.sector && (
+                                <span className={clsx(
+                                    "text-[10px] font-black uppercase px-2 py-0.5 text-white rounded-sm inline-block mb-2",
+                                    SECTOR_COLORS[item.sector] ?? "bg-gray-500"
+                                )}>
+                                    {item.sector}
+                                </span>
+                            )}
+                            <h3 className="font-bold text-gray-900 text-lg leading-snug">
+                                {item.title}
+                            </h3>
+                        </>
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
+                    <button className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-amber-600 transition-colors bg-gray-50 hover:bg-amber-50 px-3 py-1.5 rounded-lg">
+                        <Bookmark size={16} /> Quick Save
+                    </button>
+                    <Link
+                        href={isActivity ? `/profile/${item.targetId}` : `/coopertunities/${item.targetId}`}
+                        className="flex items-center gap-1.5 text-sm font-bold text-white bg-pan-deep-brown hover:bg-pan-charcoal transition-colors px-4 py-1.5 rounded-lg shadow-sm"
+                    >
+                        {isActivity ? "View Profile" : "Connect"} <ArrowRight size={14} />
+                    </Link>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function ConnectionRow({ user }: { user: Connection }) {
     return (
         <Link href={`/profile/${user.id}`}>
@@ -209,6 +285,9 @@ export default function DashboardPage() {
     const posts = data?.posts ?? [];
     const connections = data?.matches ?? [];
     const saved = data?.saved ?? [];
+    const feed = data?.feed ?? [];
+    const profileViews = data?.profileViews ?? 0;
+    const stakeholderRequests = data?.stakeholderRequests ?? 0;
 
     return (
         <div className="min-h-screen bg-[#F5F3EF]">
@@ -226,34 +305,26 @@ export default function DashboardPage() {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-                {/* ── Stat Bar ── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {/* ── Vital Signs Ticker (Top Row) ── */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <StatCard
-                        icon={Briefcase}
-                        label="My Posts"
-                        value={posts.length}
-                        color="border-amber-500"
-                        href="/coopertunities"
+                        icon={Eye}
+                        label="Profile Views"
+                        value={profileViews}
+                        color="border-blue-500"
                     />
                     <StatCard
                         icon={Users}
-                        label="Connections"
+                        label="Active Matches"
                         value={connections.length}
                         color="border-emerald-500"
                         href="/dashboard/matches"
                     />
                     <StatCard
-                        icon={Bookmark}
-                        label="Saved"
-                        value={saved.length}
-                        color="border-blue-500"
-                    />
-                    <StatCard
-                        icon={MessageSquare}
-                        label="Conversations"
-                        value={msgCount}
+                        icon={UserPlus}
+                        label="Stakeholder Requests"
+                        value={stakeholderRequests}
                         color="border-purple-500"
-                        href="/messages"
                     />
                 </div>
 
@@ -263,77 +334,27 @@ export default function DashboardPage() {
                     {/* Left — main content */}
                     <div className="lg:col-span-2 space-y-6">
 
-                        {/* My Coopertunities */}
-                        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                                <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <TrendingUp size={18} className="text-amber-600" />
-                                    My Coopertunities
+                        {/* Smart Feed */}
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="font-black text-xl text-gray-900 flex items-center gap-2">
+                                    <Activity className="text-amber-600" />
+                                    Smart Feed
                                 </h2>
-                                <Link
-                                    href="/coopertunities/create"
-                                    className="flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-900 transition-colors"
-                                >
-                                    <Plus size={16} />
-                                    New
-                                </Link>
                             </div>
 
-                            <div className="p-4">
-                                {posts.length === 0 ? (
-                                    <div className="text-center py-10 text-gray-400">
-                                        <Briefcase size={36} className="mx-auto mb-3 opacity-30" />
-                                        <p className="text-sm font-medium">No posts yet.</p>
-                                        <Link
-                                            href="/coopertunities/create"
-                                            className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-amber-700 hover:underline"
-                                        >
-                                            Post your first Coopertunity <ArrowRight size={14} />
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="grid sm:grid-cols-2 gap-3">
-                                        {posts.map((post) => (
-                                            <PostCard key={post.id} post={post} />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Saved Items */}
-                        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                                <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <Bookmark size={18} className="text-blue-500" />
-                                    Saved Items
-                                </h2>
-                                <span className="text-xs text-gray-400 font-medium">{saved.length} item{saved.length !== 1 ? "s" : ""}</span>
-                            </div>
-
-                            <div className="divide-y divide-gray-50">
-                                {saved.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-400">
-                                        <Bookmark size={32} className="mx-auto mb-2 opacity-30" />
-                                        <p className="text-sm">Nothing saved yet. Browse Coopertunities to bookmark ones you like.</p>
-                                    </div>
-                                ) : (
-                                    saved.map((item) => (
-                                        <div key={item.id} className="flex items-center gap-3 px-6 py-3">
-                                            <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-                                                    {item.targetType}
-                                                </p>
-                                                <p className="text-sm text-gray-700 font-medium truncate font-mono">
-                                                    {item.targetId}
-                                                </p>
-                                            </div>
-                                            <span className="text-xs text-gray-400 shrink-0">{timeAgo(item.createdAt)}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                            {feed.length === 0 ? (
+                                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-500">
+                                    <Activity size={32} className="mx-auto mb-3 opacity-20" />
+                                    <p>Your feed is quiet right now.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {feed.map((item) => (
+                                        <FeedCard key={item.id} item={item} />
+                                    ))}
+                                </div>
+                            )}
                         </section>
                     </div>
 
@@ -384,6 +405,7 @@ export default function DashboardPage() {
                             </h2>
                             <div className="space-y-1">
                                 {[
+                                    { label: "My Coopertunities", href: "/dashboard/manage" },
                                     { label: "Browse Coopertunities", href: "/coopertunities" },
                                     { label: "My Messages", href: "/messages" },
                                     { label: "Edit Profile", href: "/dashboard/settings/profile" },

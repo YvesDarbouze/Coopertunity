@@ -11,12 +11,11 @@ export async function updateProfileInfo(data: {
     name?: string;
     location?: string;
     profession?: string;
-    bio?: string; // We don't have a direct bio field in User yet, usually people put it in profession or we add it. 
-    // For now, let's map bio to a new field or just ignore/store in profession if generic.
-    // Actually, let's assuming we might add a 'bio' string to User if missing, or use 'title' from schema?
-    // Checking schema: User has 'profession', 'location', 'name'. No 'bio'. 
-    // Users requested 'professional history' which is WorkExperience.
-    // Let's stick to existing fields + maybe 'isAfrican' etc.
+    isVeteran?: boolean;
+    willingnessToTeach?: boolean;
+    residenceStatus?: string;
+    sector?: "PRIMARY" | "SECONDARY" | "TERTIARY" | "QUATERNARY" | null;
+    subSectors?: string[];
 }) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return { success: false, message: "Not authenticated" };
@@ -28,6 +27,11 @@ export async function updateProfileInfo(data: {
                 name: data.name,
                 location: data.location,
                 profession: data.profession,
+                isVeteran: data.isVeteran,
+                willingnessToTeach: data.willingnessToTeach,
+                residenceStatus: data.residenceStatus,
+                sector: data.sector,
+                subSectors: data.subSectors
             }
         });
         revalidatePath("/profile");
