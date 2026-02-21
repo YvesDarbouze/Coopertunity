@@ -42,6 +42,12 @@ export async function PATCH(req: Request) {
         if (body.targetLocation !== undefined) updateData.targetLocation = body.targetLocation;
         if (Array.isArray(body.skillsInventory)) updateData.skillsInventory = body.skillsInventory;
 
+        // Gap 11 & 12 Data Integrity Fields
+        if (body.bio !== undefined) updateData.bio = body.bio;
+        if (body.sector !== undefined) updateData.sector = body.sector;
+        if (Array.isArray(body.subSectors)) updateData.subSectors = body.subSectors;
+        if (typeof body.isAfrican === "boolean") updateData.isAfrican = body.isAfrican;
+
         // Duty Flags
         if (typeof body.willingnessToTeach === "boolean") updateData.willingnessToTeach = body.willingnessToTeach;
         if (typeof body.isInvestor === "boolean") updateData.isInvestor = body.isInvestor;
