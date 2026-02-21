@@ -7,12 +7,20 @@ declare module "next-auth" {
             id: string;
             isAfrican?: boolean;
             onboarded?: boolean;
+            location?: string;
+            targetLocation?: string;
+            profession?: string;
+            skillsInventory?: any;
         } & DefaultSession["user"];
     }
 
     interface User {
         isAfrican?: boolean;
         onboarded?: boolean;
+        location?: string;
+        targetLocation?: string;
+        profession?: string;
+        skillsInventory?: any;
     }
 }
 
@@ -21,5 +29,9 @@ declare module "next-auth/jwt" {
         id: string;
         isAfrican?: boolean;
         onboarded?: boolean;
+        location?: string;
+        targetLocation?: string;
+        profession?: string;
+        skillsInventory?: any;
     }
 }

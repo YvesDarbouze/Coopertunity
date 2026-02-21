@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import OnboardingWalkthrough from "@/components/onboarding/OnboardingWalkthrough";
 import { Loader2 } from "lucide-react";
+import ProfessionalDNAForm from "@/components/onboarding/ProfessionalDNAForm";
 
 import GatekeeperPrompt from "@/components/onboarding/GatekeeperPrompt";
 
@@ -21,27 +21,12 @@ export default function OnboardingPage() {
     }
 
     const handleWalkthroughComplete = async () => {
-        setIsSaving(true);
-        try {
-            const res = await fetch("/api/users/profile", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ onboarded: true }),
-            });
-
-            if (res.ok) {
-                // Force NextAuth to pull fresh session data
-                await update({ onboarded: true });
-                // Route them to the promised land
-                router.push("/dashboard");
-            } else {
-                console.error("Failed to update onboarding status");
-                setIsSaving(false);
-            }
-        } catch (error) {
-            console.error("Error saving onboarding status:", error);
-            setIsSaving(false);
-        }
+        // Form now handles its own save during submit inside ProfessionalDNAForm
+        // We just need to force session update and route
+        // Force NextAuth to pull fresh session data (which might contain the new DB state, depending on session callback)
+        await update({ onboarded: true });
+        // Route them to the promised land
+        router.push("/dashboard");
     };
 
     const handleGatekeeperDecision = async (isAfrican: boolean) => {
@@ -66,7 +51,7 @@ export default function OnboardingPage() {
         );
     }
 
-    // Determine if we need to show Gatekeeper vs Walkthrough
+    // Determine if we need to show Gatekeeper vs DNA Builder
     // If session.user.isAfrican is true, they already passed gatekeeper in a previous session but didn't finish DNA.
     const showGatekeeper = !gateKeeperPassed && session?.user?.isAfrican !== true;
 
@@ -74,5 +59,5 @@ export default function OnboardingPage() {
         return <GatekeeperPrompt onDecision={handleGatekeeperDecision} />;
     }
 
-    return <OnboardingWalkthrough onComplete={handleWalkthroughComplete} />;
+    return <ProfessionalDNAForm onComplete={handleWalkthroughComplete} />;
 }
