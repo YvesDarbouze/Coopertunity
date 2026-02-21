@@ -63,13 +63,12 @@ export default function ProfessionalDNAForm({ onComplete }: DNAFormProps) {
                 body: JSON.stringify({
                     profession,
                     skillsInventory: skills, // sending array directly
-                    targetLocation,
-                    onboarded: true // Once this is done, they are fully onboarded
+                    targetLocation
                 }),
             });
 
             if (res.ok) {
-                toast.success("Professional DNA activated!");
+                toast.success("DNA Verified. Final step pending.");
                 onComplete();
             } else {
                 toast.error("Failed to save professional DNA.");

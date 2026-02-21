@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import ProfessionalDNAForm from "@/components/onboarding/ProfessionalDNAForm";
-
+import DutyFlagsForm from "@/components/onboarding/DutyFlagsForm";
 import GatekeeperPrompt from "@/components/onboarding/GatekeeperPrompt";
 
 export default function OnboardingPage() {
     const router = useRouter();
     const { data: session, status, update } = useSession();
-    const [isSaving, setIsSaving] = useState(false);
+
     const [gateKeeperPassed, setGateKeeperPassed] = useState(false);
+    const [dnaPassed, setDnaPassed] = useState(false);
 
     // If unauthenticated, they shouldn't be here
     if (status === "unauthenticated") {
@@ -20,12 +21,10 @@ export default function OnboardingPage() {
         return null;
     }
 
-    const handleWalkthroughComplete = async () => {
-        // Form now handles its own save during submit inside ProfessionalDNAForm
+    const handleFinalComplete = async () => {
+        // Form now handles its own save during submit inside DutyFlagsForm
         // We just need to force session update and route
-        // Force NextAuth to pull fresh session data (which might contain the new DB state, depending on session callback)
         await update({ onboarded: true });
-        // Route them to the promised land
         router.push("/dashboard");
     };
 
@@ -43,7 +42,11 @@ export default function OnboardingPage() {
         }
     };
 
-    if (status === "loading" || isSaving) {
+    const handleDNAComplete = () => {
+        setDnaPassed(true);
+    };
+
+    if (status === "loading") {
         return (
             <div className="min-h-screen flex items-center justify-center bg-cloud-dancer">
                 <Loader2 className="w-12 h-12 text-pan-gold animate-spin" />
@@ -51,13 +54,19 @@ export default function OnboardingPage() {
         );
     }
 
-    // Determine if we need to show Gatekeeper vs DNA Builder
-    // If session.user.isAfrican is true, they already passed gatekeeper in a previous session but didn't finish DNA.
+    // Determine sequence
+    // 1. If not isAfrican, show Gatekeeper
     const showGatekeeper = !gateKeeperPassed && session?.user?.isAfrican !== true;
 
     if (showGatekeeper) {
         return <GatekeeperPrompt onDecision={handleGatekeeperDecision} />;
     }
 
-    return <ProfessionalDNAForm onComplete={handleWalkthroughComplete} />;
+    // 2. If Passed Gatekeeper but NOT DNA, show DNA
+    if (!dnaPassed) {
+        return <ProfessionalDNAForm onComplete={handleDNAComplete} />;
+    }
+
+    // 3. If Passed Both, show Final Duty Flags
+    return <DutyFlagsForm onComplete={handleFinalComplete} />;
 }

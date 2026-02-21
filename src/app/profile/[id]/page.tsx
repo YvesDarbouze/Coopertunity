@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Briefcase, GraduationCap } from "lucide-react";
+import { MapPin, Briefcase, GraduationCap, Shield } from "lucide-react";
 import ResultsFeed from "@/components/coopertunity/ResultsFeed";
 
 export default async function ProfilePage({ params }: { params: { id: string } }) {
@@ -30,21 +30,29 @@ export default async function ProfilePage({ params }: { params: { id: string } }
             <div className="max-w-5xl mx-auto px-6 -mt-20 relative z-10">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                     {/* Avatar */}
-                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-cloud-dancer shadow-xl bg-gray-200 overflow-hidden">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-cloud-dancer shadow-xl bg-gray-200 overflow-hidden shrink-0 mt-[-4rem]">
                         {user.image ? (
                             <img src={user.image} alt={user.name || "User"} className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl font-black text-gray-400 bg-white">
-                                {user.name?.charAt(0)}
+                            <div className="w-full h-full flex items-center justify-center text-5xl font-black text-gray-400 bg-white">
+                                {user.name?.charAt(0) || "U"}
                             </div>
                         )}
                     </div>
 
                     {/* Info */}
-                    <div className="flex-1 pt-4 md:pt-20">
-                        <h1 className="text-3xl md:text-5xl font-heading font-black text-pan-black mb-2">
-                            {user.name}
-                        </h1>
+                    <div className="flex-1 pt-4 md:pt-4">
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl md:text-5xl font-heading font-black text-pan-black">
+                                {user.name}
+                            </h1>
+                            {user.isVeteran && (
+                                <div title="The Enlistment - Verified Veteran" className="bg-pan-red/10 p-2 rounded-full border border-pan-red/20 shadow-sm self-start mt-1">
+                                    <Shield size={20} className="text-pan-red" />
+                                </div>
+                            )}
+                        </div>
+
                         <p className="text-xl text-pan-black/60 font-medium mb-4">
                             {user.profession || "Member"}
                         </p>
@@ -54,12 +62,6 @@ export default async function ProfilePage({ params }: { params: { id: string } }
                                 <div className="flex items-center gap-1">
                                     <MapPin size={16} className="text-pan-gold" />
                                     {user.location}
-                                </div>
-                            )}
-                            {user.isVeteran && (
-                                <div className="flex items-center gap-1 text-pan-gold">
-                                    <Briefcase size={16} />
-                                    Veteran
                                 </div>
                             )}
                         </div>
