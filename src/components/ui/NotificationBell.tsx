@@ -23,6 +23,8 @@ export function NotificationBell() {
     const router = useRouter();
 
     useEffect(() => {
+        let intervalId: NodeJS.Timeout;
+
         async function fetchNotifications() {
             try {
                 const res = await fetch("/api/notifications");
@@ -35,7 +37,14 @@ export function NotificationBell() {
                 console.error("Failed to load notifications", e);
             }
         }
-        fetchNotifications();
+
+        fetchNotifications(); // Initial fetch
+
+        intervalId = setInterval(() => {
+            fetchNotifications();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const markAsRead = async (id: string, linkUrl?: string) => {

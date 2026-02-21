@@ -86,24 +86,39 @@ export default function MessagesPage() {
         if (myId) loadConversations();
     }, [myId]);
 
-    // ── Fetch messages when conversation changes ──
+    // ── Fetch messages when conversation changes + 5s Polling (Gap 9) ──
     useEffect(() => {
         if (!selectedConvId) return;
-        async function loadMessages() {
-            setLoadingMsgs(true);
+
+        let intervalId: NodeJS.Timeout;
+
+        async function loadMessages(isInitial = false) {
+            if (isInitial) setLoadingMsgs(true);
             try {
                 const res = await fetch(`/api/messages?conversationId=${selectedConvId}`);
                 if (res.ok) {
                     const data: Message[] = await res.json();
+                    // Basic exact-array replacement is safe here for MVP since IDs are stable
+                    // It will not flash unless data significantly shifts structure.
                     setMessages(data);
                 }
             } catch (err) {
                 console.error("Failed to load messages", err);
             } finally {
-                setLoadingMsgs(false);
+                if (isInitial) setLoadingMsgs(false);
             }
         }
-        loadMessages();
+
+        loadMessages(true); // initial fetch
+
+        // Setup MVP real-time polling every 5000ms
+        intervalId = setInterval(() => {
+            loadMessages(false);
+        }, 5000);
+
+        return () => {
+            clearInterval(intervalId); // Cleanup to prevent memory leaks
+        };
     }, [selectedConvId]);
 
     // ── Auto-scroll to bottom ──
