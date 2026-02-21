@@ -282,6 +282,8 @@ export default function DashboardPage() {
         );
     }
 
+    const isObserver = session?.user?.isAfrican === false;
+
     const posts = data?.posts ?? [];
     const connections = data?.matches ?? [];
     const saved = data?.saved ?? [];
@@ -293,40 +295,50 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-[#F5F3EF]">
             {/* ── Header Banner ── */}
             <div className="bg-gradient-to-r from-[#3D2B1F] to-[#5C3D2E] text-white px-6 py-10">
-                <div className="max-w-7xl mx-auto">
-                    <p className="text-amber-300 text-sm font-semibold uppercase tracking-widest mb-1">Welcome back</p>
-                    <h1 className="text-3xl md:text-4xl font-black tracking-tight">
-                        Hey, {firstName} 👋
-                    </h1>
-                    <p className="text-white/60 mt-1 text-sm">
-                        Here's what's happening with your Coopertunity network.
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div>
+                        <p className="text-amber-300 text-sm font-semibold uppercase tracking-widest mb-1">
+                            {isObserver ? "Observer Mode" : "Welcome back"}
+                        </p>
+                        <h1 className="text-3xl md:text-4xl font-black tracking-tight flex items-center gap-3">
+                            Hey, {firstName} 👋
+                        </h1>
+                    </div>
+                </div>
+                <div className="max-w-7xl mx-auto mt-1">
+                    <p className="text-white/60 text-sm">
+                        {isObserver
+                            ? "You are viewing the platform as an Ally. Matchmaking features are restricted."
+                            : "Here's what's happening with your Coopertunity network."}
                     </p>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
                 {/* ── Vital Signs Ticker (Top Row) ── */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <StatCard
-                        icon={Eye}
-                        label="Profile Views"
-                        value={profileViews}
-                        color="border-blue-500"
-                    />
-                    <StatCard
-                        icon={Users}
-                        label="Active Matches"
-                        value={connections.length}
-                        color="border-emerald-500"
-                        href="/dashboard/matches"
-                    />
-                    <StatCard
-                        icon={UserPlus}
-                        label="Stakeholder Requests"
-                        value={stakeholderRequests}
-                        color="border-purple-500"
-                    />
-                </div>
+                {!isObserver && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <StatCard
+                            icon={Eye}
+                            label="Profile Views"
+                            value={profileViews}
+                            color="border-blue-500"
+                        />
+                        <StatCard
+                            icon={Users}
+                            label="Active Matches"
+                            value={connections.length}
+                            color="border-emerald-500"
+                            href="/dashboard/matches"
+                        />
+                        <StatCard
+                            icon={UserPlus}
+                            label="Stakeholder Requests"
+                            value={stakeholderRequests}
+                            color="border-purple-500"
+                        />
+                    </div>
+                )}
 
                 {/* ── Two-column layout ── */}
                 <div className="grid lg:grid-cols-3 gap-6">
@@ -361,41 +373,43 @@ export default function DashboardPage() {
                     {/* Right — sidebar */}
                     <div className="space-y-6">
                         {/* Quick Launch */}
-                        <QuickLaunchWidget />
+                        {!isObserver && <QuickLaunchWidget />}
 
                         {/* Connections */}
-                        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                                <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                                    <Users size={16} className="text-emerald-600" />
-                                    Active Connections
-                                </h2>
-                                <Link
-                                    href="/dashboard/matches"
-                                    className="text-xs font-semibold text-emerald-700 hover:underline"
-                                >
-                                    View all
-                                </Link>
-                            </div>
-                            <div className="px-2 py-2">
-                                {connections.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-400 px-4">
-                                        <Users size={28} className="mx-auto mb-2 opacity-30" />
-                                        <p className="text-sm">No connections yet.</p>
-                                        <Link
-                                            href="/dashboard/explore"
-                                            className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline"
-                                        >
-                                            Explore people <ArrowRight size={12} />
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    connections.map((user) => (
-                                        <ConnectionRow key={user.id} user={user} />
-                                    ))
-                                )}
-                            </div>
-                        </section>
+                        {!isObserver && (
+                            <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+                                    <h2 className="font-bold text-gray-900 flex items-center gap-2">
+                                        <Users size={16} className="text-emerald-600" />
+                                        Active Connections
+                                    </h2>
+                                    <Link
+                                        href="/dashboard/matches"
+                                        className="text-xs font-semibold text-emerald-700 hover:underline"
+                                    >
+                                        View all
+                                    </Link>
+                                </div>
+                                <div className="px-2 py-2">
+                                    {connections.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-400 px-4">
+                                            <Users size={28} className="mx-auto mb-2 opacity-30" />
+                                            <p className="text-sm">No connections yet.</p>
+                                            <Link
+                                                href="/dashboard/explore"
+                                                className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline"
+                                            >
+                                                Explore people <ArrowRight size={12} />
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        connections.map((user) => (
+                                            <ConnectionRow key={user.id} user={user} />
+                                        ))
+                                    )}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Quick Links */}
                         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -405,21 +419,23 @@ export default function DashboardPage() {
                             </h2>
                             <div className="space-y-1">
                                 {[
-                                    { label: "My Coopertunities", href: "/dashboard/manage" },
-                                    { label: "Browse Coopertunities", href: "/coopertunities" },
-                                    { label: "My Messages", href: "/messages" },
-                                    { label: "Edit Profile", href: "/dashboard/settings/profile" },
-                                    { label: "Explore Network", href: "/dashboard/explore" },
-                                ].map(({ label, href }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-900 transition-colors font-medium"
-                                    >
-                                        {label}
-                                        <ArrowRight size={13} className="text-gray-300" />
-                                    </Link>
-                                ))}
+                                    { label: "My Coopertunities", href: "/dashboard/manage", restrictObserver: true },
+                                    { label: "Browse Coopertunities", href: "/coopertunities", restrictObserver: false },
+                                    { label: "My Messages", href: "/messages", restrictObserver: true },
+                                    { label: "Edit Profile", href: "/dashboard/settings/profile", restrictObserver: false },
+                                    { label: "Explore Network", href: "/dashboard/explore", restrictObserver: true },
+                                ]
+                                    .filter(link => !(isObserver && link.restrictObserver))
+                                    .map(({ label, href }) => (
+                                        <Link
+                                            key={href}
+                                            href={href}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-900 transition-colors font-medium"
+                                        >
+                                            {label}
+                                            <ArrowRight size={13} className="text-gray-300" />
+                                        </Link>
+                                    ))}
                             </div>
                         </section>
                     </div>

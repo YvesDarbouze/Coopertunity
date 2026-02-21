@@ -14,6 +14,8 @@ export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const pathname = usePathname();
 
+    const isObserver = session?.user?.isAfrican === false;
+
     // Hide Header on Landing Page (handled by HeroSearch)
     if (pathname === "/") return null;
 
@@ -37,24 +39,26 @@ export default function Header() {
                         <div className="hidden md:flex items-center gap-8">
                             <nav className="flex items-center gap-6">
                                 {[
-                                    { name: "Explore", href: "/dashboard/explore", icon: Compass },
-                                    { name: "Matches", href: "/dashboard/matches", icon: Activity },
-                                    { name: "Network", href: "/dashboard/network", icon: Users },
-                                    { name: "Post", href: "/coopertunities/create", icon: PlusCircle },
-                                    { name: "Settings", href: "/dashboard/settings/profile", icon: Settings },
-                                ].map((link) => (
-                                    <Link
-                                        key={link.name}
-                                        href={link.href}
-                                        className={clsx(
-                                            "flex items-center gap-2 text-sm font-bold transition-colors duration-200",
-                                            pathname === link.href ? "text-pan-gold" : "text-pan-black/70 hover:text-pan-black"
-                                        )}
-                                    >
-                                        <link.icon size={18} />
-                                        {link.name}
-                                    </Link>
-                                ))}
+                                    { name: "Explore", href: "/dashboard/explore", icon: Compass, restrictObserver: true },
+                                    { name: "Matches", href: "/dashboard/matches", icon: Activity, restrictObserver: true },
+                                    { name: "Network", href: "/dashboard/network", icon: Users, restrictObserver: true },
+                                    { name: "Post", href: "/coopertunities/create", icon: PlusCircle, restrictObserver: true },
+                                    { name: "Settings", href: "/dashboard/settings/profile", icon: Settings, restrictObserver: false },
+                                ]
+                                    .filter(link => !(isObserver && link.restrictObserver))
+                                    .map((link) => (
+                                        <Link
+                                            key={link.name}
+                                            href={link.href}
+                                            className={clsx(
+                                                "flex items-center gap-2 text-sm font-bold transition-colors duration-200",
+                                                pathname === link.href ? "text-pan-gold" : "text-pan-black/70 hover:text-pan-black"
+                                            )}
+                                        >
+                                            <link.icon size={18} />
+                                            {link.name}
+                                        </Link>
+                                    ))}
                             </nav>
 
                             {/* Divider */}
@@ -89,22 +93,24 @@ export default function Header() {
                     >
                         <nav className="flex flex-col gap-4">
                             {[
-                                { name: "Dashboard", href: "/dashboard", icon: Home },
-                                { name: "Explore", href: "/dashboard/explore", icon: Compass },
-                                { name: "Matches", href: "/dashboard/matches", icon: Activity },
-                                { name: "Network", href: "/dashboard/network", icon: Users },
-                                { name: "Post", href: "/coopertunities/create", icon: PlusCircle },
-                            ].map((link) => (
-                                <Link
-                                    key={link.name}
-                                    href={link.href}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className="flex items-center gap-4 text-2xl font-heading font-bold text-white/90 hover:text-pan-gold transition py-2 border-b border-white/5"
-                                >
-                                    <link.icon size={28} className="text-white/50" />
-                                    {link.name}
-                                </Link>
-                            ))}
+                                { name: "Dashboard", href: "/dashboard", icon: Home, restrictObserver: false },
+                                { name: "Explore", href: "/dashboard/explore", icon: Compass, restrictObserver: true },
+                                { name: "Matches", href: "/dashboard/matches", icon: Activity, restrictObserver: true },
+                                { name: "Network", href: "/dashboard/network", icon: Users, restrictObserver: true },
+                                { name: "Post", href: "/coopertunities/create", icon: PlusCircle, restrictObserver: true },
+                            ]
+                                .filter(link => !(isObserver && link.restrictObserver))
+                                .map((link) => (
+                                    <Link
+                                        key={link.name}
+                                        href={link.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex items-center gap-4 text-2xl font-heading font-bold text-white/90 hover:text-pan-gold transition py-2 border-b border-white/5"
+                                    >
+                                        <link.icon size={28} className="text-white/50" />
+                                        {link.name}
+                                    </Link>
+                                ))}
                         </nav>
                         <div className="mt-auto mb-10">
                             <AuthToggle />

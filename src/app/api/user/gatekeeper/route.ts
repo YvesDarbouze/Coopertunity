@@ -18,10 +18,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ _error: "Invalid input" }, { status: 400 });
         }
 
+        // The Observer Route bypass:
+        // If they select "No, I am an Observer" (isAfrican === false)
+        // We set onboarded to true immediately so they skip the DNA flow.
+        const onboardedStatus = isAfrican === false ? true : false;
+
         // Update user profile
         const user = await prisma.user.update({
             where: { email: session.user.email },
-            data: { isAfrican }
+            data: {
+                isAfrican: isAfrican,
+                onboarded: onboardedStatus
+            }
         });
 
         return NextResponse.json({ success: true, user });
