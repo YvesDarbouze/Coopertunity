@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { Shield, BookOpen, MapPin, DollarSign, Calendar } from "lucide-react";
+import { Shield, BookOpen, MapPin, DollarSign, Calendar, Users, Zap } from "lucide-react";
 import Link from "next/link";
+import { ConnectAuthorButton } from "@/components/coopertunity/ConnectAuthorButton";
 
 interface Props {
     params: {
@@ -86,6 +87,45 @@ export default async function CoopertunityDetailPage({ params }: Props) {
 
 
                         </div>
+
+                        {coopertunity.requiredSkills && (coopertunity.requiredSkills as string[]).length > 0 && (
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm col-span-full">
+                                <div className="flex items-center gap-2 text-pan-gold mb-3">
+                                    <Zap className="w-5 h-5" />
+                                    <h3 className="font-bold text-deep-brown">Required Skills</h3>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {(coopertunity.requiredSkills as string[]).map((skill, i) => (
+                                        <span key={i} className="px-3 py-1 bg-peach-fuzz/10 border border-peach-fuzz/30 text-pan-charcoal text-xs font-bold rounded-full">
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {(coopertunity as any).stakeholders && ((coopertunity as any).stakeholders as any[]).length > 0 && (
+                            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm col-span-full">
+                                <div className="flex items-center gap-2 text-pan-blue mb-4">
+                                    <Users className="w-5 h-5" />
+                                    <h3 className="font-bold text-deep-brown">Open Squad Roles</h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {((coopertunity as any).stakeholders as any[]).map((role, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                            <div>
+                                                <p className="font-bold text-sm text-deep-brown">{role.role}</p>
+                                                <p className="text-xs text-mocha-mousse">{role.responsibility}</p>
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-pan-blue bg-pan-blue/10 px-2 py-1 rounded">
+                                                NEEDED
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
 
                     {/* Sidebar: Author Info */}
@@ -113,11 +153,9 @@ export default async function CoopertunityDetailPage({ params }: Props) {
                                 </div>
                             </div>
 
-                            <button className="w-full bg-deep-brown hover:bg-mocha-mousse text-white font-black py-3 rounded-xl transition shadow-md">
-                                Connect with Author
-                            </button>
+                            <ConnectAuthorButton coopertunityId={coopertunity.id} />
                             <p className="text-center text-xs text-mocha-mousse/60 mt-3 font-medium">
-                                Requires verified account
+                                Response tracked in Interactions log
                             </p>
                         </div>
                     </div>

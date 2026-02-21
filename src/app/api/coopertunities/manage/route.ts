@@ -53,3 +53,32 @@ export async function GET(req: Request) {
         return new NextResponse("Internal server error", { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        const { id } = await req.json();
+        if (!id) return new NextResponse("Missing ID", { status: 400 });
+
+        // Verify ownership
+        const coop = await prisma.coopertunity.findUnique({ where: { id } });
+        if (!coop) return new NextResponse("Not found", { status: 404 });
+        if (coop.authorId !== session.user.id) return new NextResponse("Forbidden", { status: 403 });
+
+        // Currently we do a hard delete, or we could change status to "CLOSED".
+        // Let's change status to CLOSED to preserve history/matches.
+        await prisma.coopertunity.update({
+            where: { id },
+            data: { status: "CLOSED" }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting coopertunity:", error);
+        return new NextResponse("Internal server error", { status: 500 });
+    }
+}
