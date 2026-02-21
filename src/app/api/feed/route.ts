@@ -14,6 +14,9 @@ export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const filter = searchParams.get("filter") || "ALL"; // ALL, DIASPORA, CONTINENT
+        const page = parseInt(searchParams.get("page") || "1", 10);
+        const limit = 10;
+        const skip = (page - 1) * limit;
 
         // 1. Fetch the current user's full profile first (needed for filtering and scores)
         const currentUser = await prisma.user.findUnique({
@@ -44,20 +47,23 @@ export async function GET(req: Request) {
                     }
                 }
             },
-            take: 20,
+            take: limit,
+            skip: skip,
             orderBy: { createdAt: "desc" }
         });
 
         // 4. Fetch Users (People) using verified DB filter
         const users = await prisma.user.findMany({
             where: usersWhereClause,
-            take: 20,
+            take: limit,
+            skip: skip,
             orderBy: { createdAt: "desc" }
         });
 
         // 5. Fetch Jobs (from JobListing model)
         const jobs = await prisma.jobListing.findMany({
-            take: 10,
+            take: Math.floor(limit / 2),
+            skip: Math.floor(skip / 2),
             orderBy: { postedAt: "desc" }
         });
 

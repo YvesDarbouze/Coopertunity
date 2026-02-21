@@ -11,6 +11,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = 10;
+    const skip = (page - 1) * limit;
 
     if (!query) {
         return NextResponse.json([]);
@@ -37,7 +40,8 @@ export async function GET(req: Request) {
                 isAfrican: true,
                 isVeteran: true,
             },
-            take: 10,
+            take: limit,
+            skip: skip,
         });
 
         // 2. Search Coopertunities
@@ -58,7 +62,8 @@ export async function GET(req: Request) {
                     },
                 },
             },
-            take: 10,
+            take: limit,
+            skip: skip,
         });
 
         // 3. Normalize and Combine

@@ -11,6 +11,9 @@ import {
 } from "lucide-react";
 import { TAXONOMY } from "@/lib/taxonomy_data";
 import clsx from "clsx";
+import dynamic from "next/dynamic";
+
+const DraggableMap = dynamic(() => import("@/components/coopertunity/DraggableMap"), { ssr: false });
 
 enum CoopertunityType {
     PROJECT = "PROJECT", // Team/Stakeholder
@@ -516,22 +519,16 @@ export default function WizardForm() {
                                 </div>
 
                                 {/* Geolocation Visual */}
-                                <div className="aspect-video w-full bg-gray-100 rounded-2xl relative overflow-hidden group border border-gray-200 shadow-sm">
-                                    {/* Mock Map Background */}
-                                    <div className="absolute inset-0 bg-cover bg-center opacity-50 grayscale group-hover:grayscale-0 transition duration-700"
-                                        style={{ backgroundImage: `url('https://maps.googleapis.com/maps/api/staticmap?center=0,20&zoom=2&size=800x600&maptype=terrain&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}')` }}
-                                    ></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-center">
-                                            <div className="w-12 h-12 bg-white/80 rounded-full flex items-center justify-center mx-auto mb-2 animate-pulse shadow-sm">
-                                                <MapPin className="text-peach-fuzz w-6 h-6" />
-                                            </div>
-                                            <p className="text-xs text-deep-brown/70 font-bold">Position the pin exactly on the project site.</p>
-                                        </div>
-                                    </div>
-                                    <button className="absolute bottom-4 right-4 bg-white text-deep-brown text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-50 shadow-md border border-gray-100">
-                                        Set Pin
-                                    </button>
+                                <div className="mt-4">
+                                    <p className="text-xs text-mocha-mousse font-bold mb-2 uppercase tracking-wide">Or pin the exact coordinates on the map:</p>
+                                    <DraggableMap
+                                        onLocationSelect={(lat: number, lng: number) => {
+                                            setFormData(prev => ({ ...prev, coordinates: { lat, lng } }));
+                                        }}
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-2 text-right">
+                                        Current Pin: {formData.coordinates.lat.toFixed(4)}, {formData.coordinates.lng.toFixed(4)}
+                                    </p>
                                 </div>
                             </div>
                         )}

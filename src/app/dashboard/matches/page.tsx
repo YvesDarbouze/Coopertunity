@@ -6,12 +6,16 @@ import { redirect } from "next/navigation";
 
 export const dynamic = 'force-dynamic';
 
-export default async function MatchesPage() {
+export default async function MatchesPage({ searchParams }: { searchParams: { page?: string } }) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
         redirect("/auth/signin");
     }
+
+    const page = parseInt(searchParams.page || "1", 10);
+    const limit = 10;
+    const skip = (page - 1) * limit;
 
     // Get User ID from email (since session might not have ID depending on callbacks)
     const user = await prisma.user.findUnique({
@@ -37,13 +41,15 @@ export default async function MatchesPage() {
         },
         orderBy: {
             score: 'desc'
-        }
+        },
+        take: limit,
+        skip: skip
     });
 
     // Transform matches to the format ResultsFeed expects (array of coopertunities)
     // We might want to inject the "match score" into the coopertunity object or handle it in the feed
     // For now, let's just pass the coopertunities.
-    const coopertunities = matches.map(match => ({
+    const coopertunities = matches.map((match: any) => ({
         ...match.coopertunity,
         matchScore: match.score // Optional: if we want to display it
     }));
@@ -63,7 +69,42 @@ export default async function MatchesPage() {
 
             <div className="max-w-7xl mx-auto py-8">
                 {coopertunities.length > 0 ? (
-                    <ResultsFeed coopertunities={coopertunities} />
+                    <>
+                        <ResultsFeed coopertunities={coopertunities} />
+
+                        {/* Server-Side Pagination Controls */}
+                        <div className="mt-12 flex justify-center items-center gap-4">
+                            {page > 1 ? (
+                                <a
+                                    href={`/dashboard/matches?page=${page - 1}`}
+                                    className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold hover:bg-gray-50 transition-all font-heading"
+                                >
+                                    Previous
+                                </a>
+                            ) : (
+                                <button disabled className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold disabled:opacity-30 font-heading">
+                                    Previous
+                                </button>
+                            )}
+
+                            <span className="text-sm font-bold text-deep-brown bg-peach-fuzz/20 px-4 py-1.5 rounded-full">
+                                Page {page}
+                            </span>
+
+                            {coopertunities.length === limit ? (
+                                <a
+                                    href={`/dashboard/matches?page=${page + 1}`}
+                                    className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold hover:bg-gray-50 transition-all font-heading"
+                                >
+                                    Next
+                                </a>
+                            ) : (
+                                <button disabled className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold disabled:opacity-30 font-heading">
+                                    Next
+                                </button>
+                            )}
+                        </div>
+                    </>
                 ) : (
                     <div className="text-center py-20">
                         <h3 className="text-xl font-bold text-pan-black mb-2">No matches yet.</h3>

@@ -40,8 +40,14 @@ export async function POST(req: Request) {
             stakeholders
         } = body;
 
-        // Auto-generate SIC Code based on SubSector or Title
-        const sicCode = await TAXONOMY_SERVICE.getSicCode(subSector || title);
+        let sicCode = null;
+        try {
+            // Auto-generate SIC Code based on SubSector or Title
+            sicCode = await TAXONOMY_SERVICE.getSicCode(subSector || title);
+        } catch (sicError) {
+            console.error("[SIC_GENERATION_FAILED] Defaulting to null.", sicError);
+            // Fallback gracefully so post creation does not break
+        }
 
         // @ts-ignore - stale prisma client
         const coopertunity = await prisma.coopertunity.create({

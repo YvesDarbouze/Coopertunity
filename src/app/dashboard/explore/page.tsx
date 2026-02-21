@@ -39,11 +39,14 @@ type UserResult = {
     skillsInventory: any;
 };
 
+import { SearchHistoryWidget } from "@/components/search/SearchHistoryWidget";
+
 export default function ExplorePage() {
     const [q, setQ] = useState("");
     const [location, setLocation] = useState("");
     const [sector, setSector] = useState("");
     const [type, setType] = useState<"POSTS" | "USERS">("POSTS");
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
 
     // Results
     const [results, setResults] = useState<any[]>([]);
@@ -72,6 +75,15 @@ export default function ExplorePage() {
             if (res.ok) {
                 const data = await res.json();
                 setResults(data.results || []);
+
+                // Record History asynchronously if a query was explicitly typed (ignoring empty defaults)
+                if (q.trim()) {
+                    fetch("/api/search/history", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ query: q.trim() })
+                    }).catch(console.error);
+                }
             }
         } catch (e) {
             console.error("Explore Search Failed:", e);
@@ -105,16 +117,29 @@ export default function ExplorePage() {
                     {/* Master Search Bar */}
                     <div className="flex flex-col md:flex-row gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
 
-                        {/* Keyword */}
-                        <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
-                            <Search className="text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                value={q}
-                                onChange={(e) => setQ(e.target.value)}
-                                placeholder="Search skills, titles, or keywords..."
-                                className="w-full bg-transparent border-none focus:outline-none text-sm font-medium text-gray-900 placeholder:font-normal"
-                            />
+                        {/* Keyword (With History Dropdown) */}
+                        <div className="flex-1 relative">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 transition-all h-full">
+                                <Search className="text-gray-400" size={20} />
+                                <input
+                                    type="text"
+                                    value={q}
+                                    onChange={(e) => setQ(e.target.value)}
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                    placeholder="Search skills, titles, or keywords..."
+                                    className="w-full bg-transparent border-none focus:outline-none text-sm font-medium text-gray-900 placeholder:font-normal"
+                                />
+                            </div>
+
+                            {isSearchFocused && !q && (
+                                <SearchHistoryWidget
+                                    onSelectQuery={(query) => {
+                                        setQ(query);
+                                        setIsSearchFocused(false);
+                                    }}
+                                />
+                            )}
                         </div>
 
                         {/* Location */}

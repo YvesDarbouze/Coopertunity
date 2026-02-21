@@ -11,13 +11,14 @@ export default function DiscoveryFeed() {
     const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
     const [items, setItems] = useState<FeedItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
 
     // Real Data Fetching
     useEffect(() => {
         const fetchFeed = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/feed?filter=${activeTab}`);
+                const res = await fetch(`/api/feed?filter=${activeTab}&page=${page}`);
                 if (!res.ok) throw new Error("Failed to fetch feed");
                 const data = await res.json();
                 setItems(data);
@@ -30,7 +31,7 @@ export default function DiscoveryFeed() {
         };
 
         fetchFeed();
-    }, [activeTab]);
+    }, [activeTab, page]);
 
     const filteredItems = items; // API handles filtering now
 
@@ -127,6 +128,28 @@ export default function DiscoveryFeed() {
                     </p>
                     <button className="bg-deep-brown text-white font-heading font-bold px-6 py-3 rounded-full hover:bg-mocha-mousse transition shadow-lg hover:shadow-xl">
                         Create Coopertunity
+                    </button>
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && filteredItems.length > 0 && (
+                <div className="mt-12 flex justify-center items-center gap-4">
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold disabled:opacity-30 hover:bg-gray-50 transition-all font-heading"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm font-bold text-deep-brown bg-peach-fuzz/20 px-4 py-1.5 rounded-full">
+                        Page {page}
+                    </span>
+                    <button
+                        onClick={() => setPage(p => p + 1)}
+                        className="px-6 py-2.5 rounded-full border border-gray-200 text-mocha-mousse font-bold hover:bg-gray-50 transition-all font-heading"
+                    >
+                        Next
                     </button>
                 </div>
             )}
