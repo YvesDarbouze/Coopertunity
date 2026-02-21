@@ -15,12 +15,26 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const filter = searchParams.get("filter") || "ALL"; // ALL, DIASPORA, CONTINENT
 
-        // 1. Fetch Coopertunities (Projects, Deals)
+        // 1. Fetch the current user's full profile first (needed for filtering and scores)
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id }
+        });
+
+        // 2. Setup Real Database Location Filtering (Gap 10)
+        // Replaces the vague isLocationOnContinent approximation with a direct DB check against targetLocation
+        const targetLocation = currentUser?.targetLocation;
+
+        let coopWhereClause: any = { status: "OPEN" };
+        let usersWhereClause: any = { id: { not: session.user.id } };
+
+        if (filter !== "ALL" && targetLocation) {
+            coopWhereClause.location = { contains: targetLocation, mode: "insensitive" };
+            usersWhereClause.location = { contains: targetLocation, mode: "insensitive" };
+        }
+
+        // 3. Fetch Coopertunities (Projects, Deals) using verified DB filter
         const coopertunities = await prisma.coopertunity.findMany({
-            where: {
-                status: "OPEN",
-                // TODO: Add location filtering logic here based on 'filter'
-            },
+            where: coopWhereClause,
             include: {
                 author: {
                     select: {
@@ -34,25 +48,17 @@ export async function GET(req: Request) {
             orderBy: { createdAt: "desc" }
         });
 
-        // 2. Fetch Users (People) - Exclude current user
+        // 4. Fetch Users (People) using verified DB filter
         const users = await prisma.user.findMany({
-            where: {
-                id: { not: session.user.id },
-                // TODO: Add refined filtering for "Looking to..."
-            },
+            where: usersWhereClause,
             take: 20,
             orderBy: { createdAt: "desc" }
         });
 
-        // 3. Fetch Jobs (from JobListing model)
+        // 5. Fetch Jobs (from JobListing model)
         const jobs = await prisma.jobListing.findMany({
             take: 10,
             orderBy: { postedAt: "desc" }
-        });
-
-        // 4. Fetch the current user's full profile (needed for score calculation)
-        const currentUser = await prisma.user.findUnique({
-            where: { id: session.user.id }
         });
 
         // 5. Fetch existing Match rows for this user × these coopertunities in one query
@@ -68,21 +74,39 @@ export async function GET(req: Request) {
             : [];
 
         // Build a lookup map: coopertunityId → stored score (0.0–1.0)
-        const scoreMap = new Map<string, number>(
+        let scoreMap = new Map<string, number>(
             existingMatches.map((m: { coopertunityId: string; score: number }) => [m.coopertunityId, m.score])
         );
 
-        // Helper: score for a coopertunity — stored score first, then inline calculation, then neutral
+        // Gap 3: JIT Compilation - Pre-compute and persist any missing matches
+        const newMatchesToPersist = [];
+        for (const c of coopertunities) {
+            if (!scoreMap.has(c.id) && currentUser) {
+                const rawScore = MATCHMAKING_ENGINE.calculateUtilityScore({ user: currentUser, coopertunity: c });
+                newMatchesToPersist.push({
+                    userId: session.user.id,
+                    coopertunityId: c.id,
+                    score: rawScore,
+                    status: "PENDING"
+                });
+                scoreMap.set(c.id, rawScore);
+            }
+        }
+
+        // Persist all newly discovered matches in bulk
+        if (newMatchesToPersist.length > 0) {
+            await prisma.match.createMany({
+                data: newMatchesToPersist,
+                skipDuplicates: true // Just in case of concurrent requests
+            });
+        }
+
+        // Helper: score for a coopertunity — now guaranteed to be in scoreMap or neutral
         const getCoopertunityScore = (c: any): number => {
             if (scoreMap.has(c.id)) {
-                // Stored score is 0.0–1.0; convert to 0–100 integer
                 return Math.round(scoreMap.get(c.id)! * 100);
             }
-            if (currentUser) {
-                const raw = MATCHMAKING_ENGINE.calculateUtilityScore({ user: currentUser, coopertunity: c });
-                return Math.round(raw * 100);
-            }
-            return 50; // neutral fallback when user profile unavailable
+            return 50; // fallback only if no currentUser
         };
 
         // Helper: deterministic user-to-user relevance score (no random)
@@ -157,16 +181,9 @@ export async function GET(req: Request) {
             }
         ];
 
-        // 7. Apply Filter
-        let filtered = feedItems;
-        if (filter === "DIASPORA") {
-            filtered = feedItems.filter(item => item.isDiaspora);
-        } else if (filter === "CONTINENT") {
-            filtered = feedItems.filter(item => !item.isDiaspora);
-        }
-
+        // 7. Apply Sort (Database pre-filtered items based on user's targetLocation intent)
         // Sort by matchScore descending (highest relevance first) — no random shuffle
-        const sorted = filtered.sort((a, b) => b.matchScore - a.matchScore);
+        const sorted = feedItems.sort((a, b) => b.matchScore - a.matchScore);
 
         return NextResponse.json(sorted);
 
