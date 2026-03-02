@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, MapPin, Briefcase, Users, Loader2, Globe, Building2, Flame } from "lucide-react";
+import { Search, MapPin, Briefcase, Users, Loader2, Globe, Building2, Flame, Compass } from "lucide-react";
 import clsx from "clsx";
 import Link from "next/link";
 
@@ -206,10 +206,16 @@ export default function ExplorePage() {
                 ) : results.length === 0 ? (
                     <div className="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm max-w-2xl mx-auto mt-12">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Search className="text-gray-300 w-10 h-10" />
+                            <Compass className="text-gray-300 w-10 h-10" />
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2">No Matches Found</h3>
-                        <p className="text-gray-500">We couldn't find any {type === "POSTS" ? "opportunities" : "members"} matching your exact search criteria. Try broadening your location or keyword.</p>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2 font-heading">
+                            {type === "POSTS" ? "No Opportunities Found" : "No Members Found"}
+                        </h3>
+                        <p className="text-[#3D3935]/80 font-medium">
+                            {type === "POSTS"
+                                ? "No opportunities found in this sector yet. Be the pioneer and post a need."
+                                : "We couldn't find any members matching your exact search criteria. Try broadening your location or keyword."}
+                        </p>
 
                         {(q || location || sector) && (
                             <button

@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo } from "react";
 import { Plus, Trash2, Briefcase, GraduationCap, X, Save, AlertCircle, CheckCircle2, Navigation, Leaf, Factory, Store, Cpu } from "lucide-react";
 import { updateProfileInfo, updateSkills, addWorkExperience, deleteWorkExperience, addEducation, deleteEducation } from "@/app/actions/profile";
 import clsx from "clsx";
+import { toast } from "sonner";
 
 // Reusing types locally or import from Prisma client if possible, but keep simple
 type WorkExperience = {
@@ -101,8 +102,8 @@ export default function ProfileEditor({ user, workHistory, education }: ProfileE
                 ...badges,
                 ...taxonomy
             });
-            if (res.success) alert("Profile updated!");
-            else alert("Failed to update.");
+            if (res.success) toast.success("Profile updated successfully");
+            else toast.error("Failed to save changes");
         });
     };
 
@@ -152,7 +153,7 @@ export default function ProfileEditor({ user, workHistory, education }: ProfileE
                 setIsAddingWork(false);
                 setNewWork({ title: "", company: "", location: "", startDate: "", endDate: "", current: false, description: "" });
             } else {
-                alert(res.message);
+                toast.error(res.message);
             }
         });
     };
@@ -175,7 +176,7 @@ export default function ProfileEditor({ user, workHistory, education }: ProfileE
                 setIsAddingEdu(false);
                 setNewEdu({ school: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "" });
             } else {
-                alert(res.message);
+                toast.error(res.message);
             }
         });
     };
