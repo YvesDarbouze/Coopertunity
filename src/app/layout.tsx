@@ -20,6 +20,7 @@ const manrope = Manrope({
 
 import { AuthModalProvider } from "@/contexts/AuthModalContext";
 import LoginModal from "@/components/auth/LoginModal";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Coopertunity",
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${bigshotOne.variable} ${manrope.variable} font-body bg-cloud-dancer text-deep-brown antialiased`}>
+        <Toaster richColors position="top-center" />
         <AuthContext>
           <AuthModalProvider>
             <Header />

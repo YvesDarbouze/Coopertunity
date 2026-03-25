@@ -1,5 +1,23 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { generateSEOMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: { id: string } }) {
+    const coopertunity = await prisma.coopertunity.findUnique({
+        where: { id: params.id },
+        select: { title: true, type: true, description: true }
+    });
+
+    if (!coopertunity) {
+        return { title: 'Not Found | Coopertunity' };
+    }
+
+    return generateSEOMetadata({
+        title: coopertunity.title,
+        description: coopertunity.description.substring(0, 160) + (coopertunity.description.length > 160 ? "..." : ""),
+        path: `/coopertunities/${params.id}`
+    });
+}
 import { Shield, BookOpen, MapPin, DollarSign, Calendar, Users, Zap } from "lucide-react";
 import Link from "next/link";
 import { ConnectAuthorButton } from "@/components/coopertunity/ConnectAuthorButton";
